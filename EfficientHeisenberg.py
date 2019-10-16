@@ -1,20 +1,9 @@
-# Created and maintained by Sean Grate
-
-# Last updated: August 27th, 2019
-
-
-########################################################################################################################
-
 import argparse
 import itertools as it
 from math import factorial
 
 import numpy as np
 from tqdm import tqdm
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D , art3d
-
 import pptk
 
 
@@ -132,19 +121,6 @@ def permutation_sum(permutation: np.array) -> np.array:
     return intermediate_result
 
 
-def plot_points(points: np.array):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2])
-
-        # set a limit on the axes
-        ax.set_ylim(points[:, 1].min(), points[:, 0].max())
-        ax.set_xlim(points[:, 0].min(), points[:, 1].max())
-        ax.set_zlim(points[:, 2].min(), points[:, 2].max())
-
-        plt.show()
-
 def point_cloud(points, size: float):
 
     v = pptk.viewer(points)
@@ -152,46 +128,48 @@ def point_cloud(points, size: float):
     v.set(point_size=size, floor_level=0)
     v.wait()
 
-def compute():
+def choose_basis():
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num_sums', type=int, default=3, help='Number of sums to compute.')
-    args = parser.parse_args()
-
-    num_sums = args.num_sums
+    choice = input('Which basis?\nChoices: standard (s), weird (w), real (r)\n')
 
     # starting matrices
-    standard_basis = np.array([[0, 0, 0],
-                               [1, 0, 0],
-                               [0, 1, 0],
-                               [0, 0, 1]], dtype=int)
-    weird_basis = np.array([[1, 0, 0],
-                            [0, 1, 0],
-                            [0, 1, -1],
-                            [-1, 0, 1],
-                            [0, 0, 0]], dtype=int)
+    if choice == 's':
+        chosen_basis = np.array([[0, 0, 0],
+                                 [1, 0, 0],
+                                 [0, 1, 0],
+                                 [0, 0, 1]], dtype=int)
+    elif choice == 'w':
+        chosen_basis = np.array([[1, 0, 0],
+                                 [0, 1, 0],
+                                 [0, 1, -1],
+                                 [-1, 0, 1],
+                                 [0, 0, 0]], dtype=int)
+    if choice == 'r':
+        real_x = np.linspace(0, 1, num=10)
+        real_y = np.linspace(0, 1, num=10)
+        real_z = np.linspace(0, 1, num=10)
 
-    real_x = np.linspace(0, 1, num=10)
-    real_y = np.linspace(0, 1, num=10)
-    real_z = np.linspace(0, 1, num=10)
+        real_basis = np.zeros((real_x.shape[0]*real_y.shape[0]*real_z.shape[0], 3))
+        
+        idx = 0
+        for (x, y, z) in tqdm(it.product(np.nditer(real_x), np.nditer(real_y), np.nditer(real_z)),
+                              desc='Generating real basis'):
+            if x + y + z <= 1:
+                real_basis[idx, 0] = x
+                real_basis[idx, 1] = y
+                real_basis[idx, 2] = z
 
-    real_basis = np.zeros((real_x.shape[0]*real_y.shape[0]*real_z.shape[0], 3))
+            idx += 1
+        chosen_basis = np.unique(real_basis, axis=0)
 
-    idx = 0
-    for (x, y, z) in tqdm(it.product(np.nditer(real_x), np.nditer(real_y), np.nditer(real_z)),
-                          desc='Generating real basis'):
-        if x + y + z <= 1:
-            real_basis[idx, 0] = x
-            real_basis[idx, 1] = y
-            real_basis[idx, 2] = z
+    return chosen_basis
 
-        idx += 1
-    real_basis = np.unique(real_basis, axis=0)
 
-    # pt_size = 0.01
+def compute(chosen_basis: np.array):
+
     pt_size = 0.25
-    point_cloud(weird_basis, pt_size)
-    vectors = HeisenbergVectors(weird_basis, num_sums=num_sums)
+    point_cloud(basis, pt_size)
+    vectors = HeisenbergVectors(basis, num_sums=num_sums)
     ExamineData(vectors.basis_vectors, 'Basis Vectors')
 
     # find all possible combinations of basis vectors
@@ -207,4 +185,14 @@ def compute():
 
 
 if __name__ == '__main__':
-    compute()
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_sums', type=int, default=3, help='Number of sums to compute.')
+    args = parser.parse_args()
+
+    num_sums = args.num_sums
+
+    basis = choose_basis()
+    
+    compute(basis)
+
