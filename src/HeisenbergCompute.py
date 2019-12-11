@@ -28,7 +28,7 @@ class HeisenbergVectors():
 
         Returns a list of tuples of np.array representing all the permutations.
         """
-        
+
         # compute all permutations of rows
         vectors = np.vsplit(self.basis_vectors, self.basis_vectors.shape[0])
         permutations = tqdm(it.product(vectors, repeat=self.num_sums),
@@ -84,4 +84,3 @@ def _permutation_sum(permutation: np.array) -> np.array:
     # drivers.ExamineData(intermediate_result, 'intermediate').pause()
 
     return intermediate_result
-
