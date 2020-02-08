@@ -63,6 +63,23 @@ def compute_h3_pn(S: List[Vec3], n: int) -> Iterable[Vec3]:
 
     Note that points may appear more than once in the sequence generated.
     """
+    # It just occurred to me that we could speed up the computation of P_n for
+    # generating sets containing 0 by computing the nth dilate iteratively on S
+    # \ {(0, 0, 0)}.
+    #
+    # We could maybe generalize this to any set where there's some (0, 0, z)
+    # vectors? Compute the... hm. I think we can do this. Let S' be the
+    # generating set with all the z-vectors removed. Now... Compute the dilates
+    # P_k(S') for k = 1, 2, ..., n. For k = 1, ..., n - 1, shift up P_k(S') by
+    # z_1 + ... + z_(n - k) for some nonzero z values that you can get in S.
+    #
+    # This might not be that much faster if you don't have zero. Ugh. Also I
+    # might have written it down wrong. Or thought wrong. Ugh.
+    #
+    # Instead of having to compute products for |S|^n things, you instead have
+    # to compute products for (|S| - 1) + (|S| - 1)^2 + ... + (|S| - 1)^n
+    # things. If you have c of the z vectors then... I think would be
+    # (|S| - 1) + (|S| - 1)^2 + ... + (|S| - c)^n products
     assert n >= 0
     if n == 0:
         return set()
