@@ -1,4 +1,5 @@
-import argparse
+from configparser import ConfigParser
+from pathlib import Path
 import itertools as it
 from math import factorial
 
@@ -9,28 +10,35 @@ import pptk
 # for 3D printing
 # from stl import mesh
 
-from HeisenbergCompute import HeisenbergVectors
-from utils import point_cloud
+from shapes import Polytope, Point
 import drivers
 
 
-def choose_basis():
+def choose_basis(config: ConfigParser):
+    r"""Chooses a basis of points.
 
-    choice = input('Which basis?\nChoices: standard (s), weird (w), real (r)\n')
+    :param config: ConfigParser
+        Determines which basis to use. User specified in the "SETTINGS/basis"
+        option in config.ini. Currently only "s", "w", "r" are supported.
+        (1) "s" consists of the unit points of R^3.
+        (2) "w" consists a an arbitrary number of integer points in R^3.
+        (3) "r" consists of real points (not necessarily integral!).
+    """
 
+    choice = config["SETTINGS"]["basis"]
     # starting matrices
-    if choice == 's':
-        chosen_basis = np.array([[0, 0, 0],
-                                 [1, 0, 0],
-                                 [0, 1, 0],
-                                 [0, 0, 1]], dtype=int)
-    elif choice == 'w':
-        chosen_basis = np.array([[1, 0, 0],
-                                 [0, 1, 0],
-                                 [0, 1, -1],
-                                 [-1, 0, 1],
-                                 [0, 0, 0]], dtype=int)
-    if choice == 'r':
+    if choice == "s":
+        basis = np.array([[0, 0, 0],
+                          [1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]], dtype=int)
+    elif choice == "w":
+        basis = np.array([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 1, -1],
+                          [-1, 0, 1],
+                          [0, 0, 0]], dtype=int)
+    elif choice == "r":
         real_x = np.linspace(0, 1, num=10)
         real_y = np.linspace(0, 1, num=10)
         real_z = np.linspace(0, 1, num=10)
@@ -39,45 +47,41 @@ def choose_basis():
 
         idx = 0
         for (x, y, z) in tqdm(it.product(np.nditer(real_x), np.nditer(real_y), np.nditer(real_z)),
-                              desc='Generating real basis'):
+                              desc="Generating real basis"):
             if x + y + z <= 1:
                 real_basis[idx, 0] = x
                 real_basis[idx, 1] = y
                 real_basis[idx, 2] = z
 
             idx += 1
-        chosen_basis = np.unique(real_basis, axis=0)
+        basis = np.unique(real_basis, axis=0)
 
-    return chosen_basis
+    else:
+        raise NotImplementedError("Invalid choice of basis points!")
+
+    return basis
 
 
-def compute(chosen_basis: np.array):
+def compute(basis: np.array, num_dilates: int, mode: str):
 
-    pt_size = 0.25
-    # point_cloud(basis, pt_size)
-    vectors = HeisenbergVectors(basis, num_sums=num_sums)
-    # drivers.ExamineData(vectors.basis_vectors, 'Basis Vectors')
 
-    # find all possible combinations of basis vectors
-    vectors.compute_permutations()
-    vectors.get_unique_permutations()
-    drivers.ExamineData(vectors.unique_permutations, 'unique permutations')
 
-    point_cloud(vectors.unique_permutations, pt_size)
-    # plot_points(vectors.unique_permutations)
+    return polytope
 
 
 ########################################################################################################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    config = ConfigParser()
+    config.read(r"../config.ini")
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num_sums', type=int, default=3, help='Number of sums to compute.')
-    args = parser.parse_args()
+    chosen_basis = choose_basis(config)
+    chosen_basis = [Point(point, mode=config["SETTINGS"]["mode"]) for point in chosen_basis]
 
-    num_sums = args.num_sums
+    polytope = Polytope(chosen_basis, num_dilates=config["SETTINGS"].getint("num_dilates"))
 
-    basis = choose_basis()
-
-    compute(basis)
+    # find all possible combinations of basis vectors
+    polytope.compute_permutations()
+    polytope.get_unique_permutations()
+    polytope.show()
