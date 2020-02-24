@@ -83,9 +83,15 @@ def compute_h3_pn(S: List[Vec3], n: int) -> Iterable[Vec3]:
     assert n >= 0
     if n == 0:
         return set()
-    tuples = it.product(S, repeat=n)
-    p_n = map(vectuple_h3_sum, tuples)
-    return p_n
+
+    # Iteratively compute p_n
+    p_k = S
+    for k in range(2, n+1):
+        words = it.product(p_k, S)
+        p_k = map(vectuple_h3_sum, words)
+
+    # By now should have p_k = p_n.
+    return p_k
 
 def compute_h3_pn_spheres(S: List[Vec3], n: int) -> Generator[Tuple[Vec3, int], None, None]:
     """
