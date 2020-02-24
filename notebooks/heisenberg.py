@@ -10,11 +10,13 @@ class PlotForm:
     xs: List[float]
     ys: List[float]
     zs: List[float]
+    colors: List[int]
 
-    def __init__(self, xs, ys, zs):
+    def __init__(self, xs, ys, zs, colors):
         self.xs = xs
         self.ys = ys
         self.zs = zs
+        self.colors = colors
 
     @staticmethod
     def from_pt_set(pts: List[Vec3]) -> 'PlotForm':
@@ -23,11 +25,31 @@ class PlotForm:
             for (element, list_) in zip(pt, lists):
                 list_.append(element)
         xs, ys, zs = lists
-        return PlotForm(xs, ys, zs)
+        colors = []
+        return PlotForm(xs, ys, zs, colors)
+
+    @staticmethod
+    def from_spheres(pts: Iterable[Tuple[Vec3, int]]) -> 'PlotForm':
+        lists = ([], [], [])
+        colors = []
+        for pt, color in pts:
+            for (element, list_) in zip(pt, lists):
+                list_.append(element)
+            colors.append(color)
+        xs, ys, zs = lists
+        return PlotForm(xs, ys, zs, colors)
 
     def plotme(self, fig, **kwargs):
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(self.xs, self.ys, self.zs, **kwargs)
+        if self.colors:
+            # TODO: set a color map if I need to
+            ax.scatter(
+                self.xs, self.ys, self.zs,
+                c=self.colors,
+                **kwargs
+            )
+        else:
+            ax.scatter(self.xs, self.ys, self.zs, **kwargs)
 
 
 def heisen3_sum(v1: Vec3, v2: Vec3) -> Vec3:
@@ -152,15 +174,13 @@ def compute_h3_pn_spheres(S: List[Vec3], n: int) -> Generator[Tuple[Vec3, int], 
     # triangular summing thing (where we start over fresh each time), which
     # should save time also.
     seen = set(tuple(s) for s in S)
-    p_prev = S
+    p_k = S
     for k in range(2, n+1):
-        words = it.product(p_prev, S)
-        p_k = map(lambda w: heisen3_sum(w[0], w[1]), words)
+        words = it.product(p_k, S)
+        p_k = list(map(vectuple_h3_sum, words))
 
         for vec in p_k:
             tup = tuple(vec)
             if tup not in seen:
                 seen.add(tup)
                 yield (vec, k)
-
-        p_prev = p_k
