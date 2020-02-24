@@ -156,11 +156,11 @@ def compute_h3_pn_spheres(S: List[Vec3], n: int) -> Generator[Tuple[Vec3, int], 
     for k in range(2, n+1):
         words = it.product(p_prev, S)
         p_k = map(lambda w: heisen3_sum(w[0], w[1]), words)
-        
+
         for vec in p_k:
             tup = tuple(vec)
             if tup not in seen:
                 seen.add(tup)
                 yield (vec, k)
-        
+
         p_prev = p_k
