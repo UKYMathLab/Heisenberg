@@ -10,7 +10,7 @@ import pptk
 # for 3D printing
 # from stl import mesh
 
-from shapes import Polytope, Point
+from shapes import Point, Polytope, JoinedPolytope
 import drivers
 
 
@@ -62,26 +62,34 @@ def choose_basis(config: ConfigParser):
     return basis
 
 
-def compute(basis: np.array, num_dilates: int, mode: str):
+def compute(basis: np.array, num_dilates: int, mode: str, **kwargs):
+    polytope = Polytope(chosen_basis, num_dilates=num_dilates)
 
+    # find all possible combinations of basis vectors
+    polytope.compute_permutations()
+    polytope.get_unique_permutations()
 
+    if kwargs.get("show", True):
+        polytope.show()
 
     return polytope
-
-
-########################################################################################################################
 
 
 if __name__ == "__main__":
     config = ConfigParser()
     config.read(r"../config.ini")
+    dilates = [int(d) for d in config["SETTINGS"]["num_dilates"].split(",")]
 
+    # get basis points
     chosen_basis = choose_basis(config)
     chosen_basis = [Point(point, mode=config["SETTINGS"]["mode"]) for point in chosen_basis]
 
-    polytope = Polytope(chosen_basis, num_dilates=config["SETTINGS"].getint("num_dilates"))
+    polys = []
+    for idx, d in enumerate(dilates):
+        poly = compute(chosen_basis, d, config["SETTINGS"]["mode"], show=False)
+        poly.coloring = np.full((poly.num_unique_permutations,), idx)
+        polys.append(poly)
 
-    # find all possible combinations of basis vectors
-    polytope.compute_permutations()
-    polytope.get_unique_permutations()
-    polytope.show()
+    if config["SETTINGS"]["show_progression"]:
+        total_poly = JoinedPolytope(*polys)
+        total_poly.show()
