@@ -109,7 +109,9 @@ class Polytope:
         """
 
         # compute all permutations of rows
-        self.all_permutations = list(it.product(self.basis_points, repeat=self.num_dilates))
+        self.all_permutations = list(tqdm(it.product(self.basis_points, repeat=self.num_dilates),
+                                          total=len(self.basis_points)**self.num_dilates,
+                                          desc=f"Computing dilate n={self.num_dilates}"))
 
         # check computations went correctly
         drivers.CheckValidLength(len(self.all_permutations),
@@ -125,7 +127,7 @@ class Polytope:
         results = []
         for permutation in tqdm(self.all_permutations,
                                 total=self.num_permutations,
-                                desc="Summing permutations"):
+                                desc=f"Evaluating dilate n={self.num_dilates}"):
             intermediate_result = None
             for p in permutation:
                 if intermediate_result is None:
@@ -156,9 +158,9 @@ class Polytope:
         if kwargs.get("play", False) or kwargs.get("record", False):
             # [x, y, z, phi, theta, r]
             n = 10
-            x,y = n/2,n/2
+            x,y = 0,0
             theta = np.pi/6
-            r = 35
+            r = 70
             poses = [[x,y,0, 0*np.pi/2, theta, r],
                      [x,y,0, 1*np.pi/2, theta, r],
                      [x,y,0, 2*np.pi/2, theta, r],

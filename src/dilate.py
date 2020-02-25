@@ -35,8 +35,10 @@ def choose_basis(config: ConfigParser):
     elif choice == "w":
         basis = np.array([[1, 0, 0],
                           [0, 1, 0],
-                          [0, 1, -1],
-                          [-1, 0, 1],
+                          [0, 0, 1],
+                          [-1, 0, 0],
+                          [0, -1, 0],
+                          [0, 0, -1],
                           [0, 0, 0]], dtype=int)
     elif choice == "r":
         real_x = np.linspace(0, 1, num=10)
@@ -70,7 +72,7 @@ def compute(basis: np.array, num_dilates: int, mode: str, **kwargs):
     polytope.get_unique_permutations()
 
     if kwargs.get("show", True):
-        polytope.show()
+        polytope.show(**kwargs)
 
     return polytope
 
@@ -86,10 +88,11 @@ if __name__ == "__main__":
 
     polys = []
     for idx, d in enumerate(dilates):
-        poly = compute(chosen_basis, d, config["SETTINGS"]["mode"], show=False)
+        poly = compute(chosen_basis, d, config["SETTINGS"]["mode"],
+                       show=config["SETTINGS"].getboolean("show_individuals"))
         poly.coloring = np.full((poly.num_unique_permutations,), idx)
         polys.append(poly)
 
-    if config["SETTINGS"]["show_progression"]:
+    if config["SETTINGS"].getboolean("show_progression"):
         total_poly = JoinedPolytope(*polys)
         total_poly.show()
