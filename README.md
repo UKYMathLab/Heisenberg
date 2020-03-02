@@ -20,4 +20,4 @@ basically:
   as a single set of points. Should be a boolean.
 
 After changing the settings, simply navigate to `src/` and run
-`EfficientHeisenberg.py` from the command line.
+`dilate.py` from the command line.

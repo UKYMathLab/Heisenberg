@@ -33,13 +33,11 @@ def choose_basis(config: ConfigParser):
                           [0, 1, 0],
                           [0, 0, 1]], dtype=int)
     elif choice == "w":
-        basis = np.array([[1, 0, 0],
+        basis = np.array([[0, 0, 0],
+                          [1, 0, 0],
                           [0, 1, 0],
-                          [0, 0, 1],
                           [-1, 0, 0],
-                          [0, -1, 0],
-                          [0, 0, -1],
-                          [0, 0, 0]], dtype=int)
+                          [0, -1, 0]], dtype=int)
     elif choice == "r":
         real_x = np.linspace(0, 1, num=10)
         real_y = np.linspace(0, 1, num=10)
@@ -56,7 +54,7 @@ def choose_basis(config: ConfigParser):
                 real_basis[idx, 2] = z
 
             idx += 1
-        basis = np.unique(real_basis, axis=0)
+        basis = np.unique(real_basis, axis=0).tolist()
 
     else:
         raise NotImplementedError("Invalid choice of basis points!")
@@ -88,8 +86,15 @@ if __name__ == "__main__":
 
     polys = []
     for idx, d in enumerate(dilates):
+        # check that computations are possible
+        # I do not like using continue, but am too lazy to implement an alternative
+        if len(chosen_basis)**d > 10_000_000:
+            print(f"WARNING: n={d} is too large to compute...skipping.")
+            continue
+
         poly = compute(chosen_basis, d, config["SETTINGS"]["mode"],
-                       show=config["SETTINGS"].getboolean("show_individuals"))
+                       show=config["SETTINGS"].getboolean("show_individuals"),
+                       record=False, save_dir=Path(__file__).resolve().parent/"recordings"/"diamond"/f"diamond{d}")
         poly.coloring = np.full((poly.num_unique_permutations,), idx)
         polys.append(poly)
 

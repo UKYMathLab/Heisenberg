@@ -93,7 +93,6 @@ class Polytope:
 
         return JoinedPolytope(self, other)
 
-
     @property
     def num_permutations(self):
         return len(self.all_permutations)
@@ -173,7 +172,10 @@ class Polytope:
 
             # record rotating point cloud
             if kwargs.get("record", False):
+                # create the save directory if it does not already exist
                 save_dir = kwargs.get("save_dir", Path().cwd()/"recordings")
+                save_dir.mkdir(parents=True, exist_ok=True)
+
                 v.record(folder=save_dir, poses=poses,
                          ts=0.5*np.arange(len(poses)),
                          fps=kwargs.get("fps", 30))
@@ -228,7 +230,10 @@ class JoinedPolytope:
 
             # record rotating point cloud
             if kwargs.get("record", False):
+                # create the save directory if it does not already exist
                 save_dir = kwargs.get("save_dir", Path().cwd()/"recordings")
+                save_dir.mkdir(parents=True, exist_ok=True)
+
                 v.record(folder=save_dir, poses=poses,
                          ts=0.5*np.arange(len(poses)),
                          fps=kwargs.get("fps", 30))
